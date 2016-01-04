@@ -6,12 +6,12 @@
 #include <algorithm>
 
 namespace Analysis {
-template<class, class,
+template<class, class, class,
          class, class> class kd_tree;
 
 namespace kd_tree_internal {
 class kd_node_base {
-  template<class, class,
+  template<class, class, class,
            class, class> friend class Analysis::kd_tree;
 
   bool m_isLeaf;
@@ -30,7 +30,7 @@ public:
 
 template<class Key, class T>
 class kd_node : public kd_node_base {
-  template<class, class,
+  template<class, class, class,
            class, class> friend class Analysis::kd_tree;
 
   using subkey_type = typename Key::value_type;
@@ -75,7 +75,7 @@ public:
 template<class Key, class T,
          class Alloc = std::allocator<std::pair<const Key, const T> > >
 class kd_leaf : public kd_node_base {
-  template<class, class,
+  template<class, class, class,
            class, class> friend class Analysis::kd_tree;
 
   using value_type = std::pair<const Key, const T>;
@@ -108,12 +108,14 @@ public:
 
 template<class Key, class T,
          class Compare = std::less<typename Key::value_type>,
+         class Equate  = std::equal_to<typename Key::value_type>,
          class Alloc   = std::allocator<std::pair<const Key, const T> > >
 class kd_tree {
 
   kd_tree_internal::kd_node<Key, T> *m_root { nullptr };
   size_t  m_dim;
   Compare m_comp;
+  Equate  m_equate;
   Alloc   m_alloc;
   std::forward_list < std::reference_wrapper < const std::pair<const Key, const T>>> m_values;
 

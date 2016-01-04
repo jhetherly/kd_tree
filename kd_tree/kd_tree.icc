@@ -1,8 +1,8 @@
 namespace Analysis {
 template<class Key, class T,
-         class Compare, class Alloc>
+         class Compare, class Equate, class Alloc>
 template<class Iterator>
-kd_tree<Key, T, Compare, Alloc>::kd_tree (Iterator begin, Iterator end, const size_t &dim) :
+kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end, const size_t &dim) :
   m_dim(dim)
 {
   auto length = std::distance(begin, end);
@@ -71,10 +71,10 @@ kd_tree<Key, T, Compare, Alloc>::kd_tree (Iterator begin, Iterator end, const si
 
 
 template<class Key, class T,
-         class Compare, class Alloc>
+         class Compare, class Equate, class Alloc>
 template<class Iterator>
 double
-kd_tree<Key, T, Compare, Alloc>::computeMedian (std::pair<Iterator, Iterator> &range,
+kd_tree<Key, T, Compare, Equate, Alloc>::computeMedian (std::pair<Iterator, Iterator> &range,
                                                 const unsigned long long &coord_index)
 {
   const auto &range_begin = range.first,
@@ -123,11 +123,11 @@ kd_tree<Key, T, Compare, Alloc>::computeMedian (std::pair<Iterator, Iterator> &r
 
 
 template<class Key, class T,
-         class Compare, class Alloc>
+         class Compare, class Equate, class Alloc>
 template<class Iterator>
 std::pair < std::pair<Iterator, Iterator>,
 std::pair < Iterator, Iterator >>
-kd_tree<Key, T, Compare, Alloc>::splitRange(std::pair<Iterator, Iterator>&range,
+kd_tree<Key, T, Compare, Equate, Alloc>::splitRange(std::pair<Iterator, Iterator>&range,
                                             const unsigned long long &coord_index,
                                             const double &median)
 {
@@ -152,10 +152,10 @@ kd_tree<Key, T, Compare, Alloc>::splitRange(std::pair<Iterator, Iterator>&range,
 
 
 template<class Key, class T,
-         class Compare, class Alloc>
+         class Compare, class Equate, class Alloc>
 template<class Container>
 auto
-kd_tree<Key, T, Compare, Alloc>::operator[](const Container &con) const
+kd_tree<Key, T, Compare, Equate, Alloc>::operator[](const Container &con) const
   ->std::vector < std::reference_wrapper < const value_type >>
 {
   std::vector < std::reference_wrapper < const value_type >> result;
@@ -187,7 +187,8 @@ kd_tree<Key, T, Compare, Alloc>::operator[](const Container &con) const
       auto left_n  = node->GetLeftChild(),
            right_n = node->GetRightChild();
 
-      if ((m_comp(min, median) || (min == median)) && !m_comp(max, median)) { // both
+      if ((m_comp(min, median) || m_equate(min, median)) &&
+          !m_comp(max, median)) { // both
         if (right_n != nullptr) {
           ns.push_front(right_n);
           depths.push_front(depth + 1);
@@ -217,10 +218,10 @@ kd_tree<Key, T, Compare, Alloc>::operator[](const Container &con) const
 } // []
 
 template<class Key, class T,
-         class Compare, class Alloc>
+         class Compare, class Equate, class Alloc>
 template<class Container>
 bool
-kd_tree<Key, T, Compare, Alloc>::CheckKey (const Container &con, const Key &key) const
+kd_tree<Key, T, Compare, Equate, Alloc>::CheckKey (const Container &con, const Key &key) const
 {
   auto ci = con.begin();
   auto ki = key.begin();
@@ -229,7 +230,8 @@ kd_tree<Key, T, Compare, Alloc>::CheckKey (const Container &con, const Key &key)
   do {
     auto min = ci->first,
          max = ci->second;
-    result &= ((m_comp(min, *ki) || min == *ki) && (m_comp(*ki, max) || *ki == max));
+    result &= ((m_comp(min, *ki) || m_equate(min, *ki)) &&
+               (m_comp(*ki, max) || m_equate(*ki, max)));
     ci      = std::next(ci);
     ki      = std::next(ki);
   } while (ci != con.end() && ki != key.end() && result);
