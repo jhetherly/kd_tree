@@ -229,7 +229,7 @@ kd_tree<Key, T, Compare, Alloc>::CheckKey (const Container &con, const Key &key)
   do {
     auto min = ci->first,
          max = ci->second;
-    result &= (min <= *ki && *ki <= max);
+    result &= ((m_comp(min, *ki) || min == *ki) && (m_comp(*ki, max) || *ki == max));
     ci      = std::next(ci);
     ki      = std::next(ki);
   } while (ci != con.end() && ki != key.end() && result);
