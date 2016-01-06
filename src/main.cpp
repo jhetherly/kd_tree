@@ -102,11 +102,11 @@ public:
     if (rhs.GetType() == VarBase::Type::Float) return (m_value < static_cast<const Var<float>&>(rhs));
     if (rhs.GetType() == VarBase::Type::Double) return (m_value < static_cast<const Var<double>&>(rhs));
     if (rhs.GetType() == VarBase::Type::Int) return (m_value < static_cast<const Var<int>&>(rhs));
-    if (rhs.GetType() == VarBase::Type::Unsigned) return (m_value < static_cast<const Var<unsigned>&>(rhs));
+    if (rhs.GetType() == VarBase::Type::Unsigned) return (static_cast<const unsigned>(m_value) < static_cast<const Var<unsigned>&>(rhs));
     if (rhs.GetType() == VarBase::Type::Long) return (m_value < static_cast<const Var<long>&>(rhs));
-    if (rhs.GetType() == VarBase::Type::UnsignedLong) return (m_value < static_cast<const Var<unsigned long>&>(rhs));
+    if (rhs.GetType() == VarBase::Type::UnsignedLong) return (static_cast<const unsigned long>(m_value) < static_cast<const Var<unsigned long>&>(rhs));
     if (rhs.GetType() == VarBase::Type::Char) return (m_value < static_cast<const Var<char>&>(rhs));
-    if (rhs.GetType() == VarBase::Type::UnsignedChar) return (m_value < static_cast<const Var<unsigned char>&>(rhs));
+    if (rhs.GetType() == VarBase::Type::UnsignedChar) return (static_cast<const unsigned char>(m_value) < static_cast<const Var<unsigned char>&>(rhs));
     return false;
   }
 
@@ -116,11 +116,11 @@ public:
     if (rhs.GetType() == VarBase::Type::Float) return (m_value == static_cast<const Var<float>&>(rhs));
     if (rhs.GetType() == VarBase::Type::Double) return (m_value == static_cast<const Var<double>&>(rhs));
     if (rhs.GetType() == VarBase::Type::Int) return (m_value == static_cast<const Var<int>&>(rhs));
-    if (rhs.GetType() == VarBase::Type::Unsigned) return (m_value == static_cast<const Var<unsigned>&>(rhs));
+    if (rhs.GetType() == VarBase::Type::Unsigned) return (static_cast<const unsigned>(m_value) == static_cast<const Var<unsigned>&>(rhs));
     if (rhs.GetType() == VarBase::Type::Long) return (m_value == static_cast<const Var<long>&>(rhs));
-    if (rhs.GetType() == VarBase::Type::UnsignedLong) return (m_value == static_cast<const Var<unsigned long>&>(rhs));
+    if (rhs.GetType() == VarBase::Type::UnsignedLong) return (static_cast<const unsigned long>(m_value) == static_cast<const Var<unsigned long>&>(rhs));
     if (rhs.GetType() == VarBase::Type::Char) return (m_value == static_cast<const Var<char>&>(rhs));
-    if (rhs.GetType() == VarBase::Type::UnsignedChar) return (m_value == static_cast<const Var<unsigned char>&>(rhs));
+    if (rhs.GetType() == VarBase::Type::UnsignedChar) return (static_cast<const unsigned char>(m_value) == static_cast<const Var<unsigned char>&>(rhs));
     return false;
   }
 
@@ -259,8 +259,16 @@ int main (int argc, const char *argv[])
     cout << "contained elements of tree in reverse sorted order: ";
     for (auto p : contained) cout << p.get().second << " ";
     cout << endl;
+
+    for (auto &v : data)
+      for (auto &e : v)
+        delete e;
+    for (auto &p : constraints) {
+      delete p.first;
+      delete p.second;
+    }
   }
-  // // ///////////////////////////
+  // ///////////////////////////
 
   return 0;
 } // main
