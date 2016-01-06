@@ -2,7 +2,6 @@
 #include <iterator>
 #include <initializer_list>
 #include <forward_list>
-#include <vector>
 #include <algorithm>
 
 namespace Analysis {
@@ -46,7 +45,6 @@ public:
   virtual ~kd_node ()
   {
     if (m_leftChild) delete m_leftChild;
-
     if (m_rightChild) delete m_rightChild;
   }
 
@@ -120,7 +118,7 @@ class kd_tree {
   std::forward_list < std::reference_wrapper < const std::pair<const Key, const T>>> m_values;
 
   template<class RandomAccessIterator>
-  double
+  typename Key::value_type
   computeMedian (std::pair<RandomAccessIterator, RandomAccessIterator>&,
                  const unsigned long long&);
   template<class ForwardIterator>
@@ -128,7 +126,7 @@ class kd_tree {
   std::pair < ForwardIterator, ForwardIterator >>
   splitRange(std::pair<ForwardIterator, ForwardIterator>&,
              const unsigned long long&,
-             const double&);
+             const typename Key::value_type&);
   template<class Container>
   bool CheckKey (const Container&,
                  const Key      &) const;
@@ -178,11 +176,11 @@ public:
    * Returns vector of key-value pairs in "sorted" order
    */
   template<class Container>
-  std::vector < std::reference_wrapper < const value_type >> operator[](const Container&) const;
+  std::forward_list < std::reference_wrapper < const value_type >> operator[](const Container&) const;
 
-  std::vector < std::reference_wrapper < const value_type >>
+  std::forward_list < std::reference_wrapper < const value_type >>
   operator[](std::initializer_list<std::pair<subkey_type, subkey_type>> l) const
-  {return (*this)[std::vector<std::pair<subkey_type, subkey_type>>(l)];}
+  {return (*this)[std::forward_list<std::pair<subkey_type, subkey_type>>(l)];}
 
   // iterate over all elements in tree in reverse order
   iterator begin () {return m_values.begin();}
