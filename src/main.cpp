@@ -11,6 +11,7 @@
 // ///////////////////////////
 #include <type_traits>
 #include <utility>
+#include <string>
 
 class VarBase
 {
@@ -125,9 +126,6 @@ public:
 
 };
 
-
-#include <string>
-
 template <>
 class Var<std::string> : public VarBaseSortable
 {
@@ -229,22 +227,22 @@ int main (int argc, const char *argv[])
   // ///////////////////////////
   {
     cout << "Using custom class as coordinate variables (same coordinates):" << endl;
-    vector<vector<Var<double>>> data = {{Var<double>(10), Var<double>(1), Var<double>(1)},
-                                        {Var<double>(8), Var<double>(3), Var<double>(3)},
-                                        {Var<double>(1), Var<double>(3), Var<double>(3)},
-                                        {Var<double>(5), Var<double>(5), Var<double>(5)},
-                                        {Var<double>(1), Var<double>(4), Var<double>(4)},
-                                        {Var<double>(7), Var<double>(2), Var<double>(2)},
-                                        {Var<double>(3), Var<double>(4), Var<double>(4)},
-                                        {Var<double>(2), Var<double>(2), Var<double>(2)}};
-    vector < pair < vector<VarBaseSortable*>, int >> points_ptrs { { { &data[0][0], &data[0][1], &data[0][2] }, 1 },
-                                                              { { &data[1][0], &data[1][1], &data[1][2] }, 2 },
-                                                              { { &data[2][0], &data[2][1], &data[2][2] }, 3 },
-                                                              { { &data[3][0], &data[3][1], &data[3][2] }, 4 },
-                                                              { { &data[4][0], &data[4][1], &data[4][2] }, 5 },
-                                                              { { &data[5][0], &data[5][1], &data[5][2] }, 6 },
-                                                              { { &data[6][0], &data[6][1], &data[6][2] }, 7 },
-                                                              { { &data[7][0], &data[7][1], &data[7][2] }, 8 } };
+    vector<vector<VarBaseSortable*>> data = {{new Var<double>(10), new Var<int>(1), new Var<string>("1")},
+                                        {new Var<double>(8), new Var<int>(3), new Var<string>("3")},
+                                        {new Var<double>(1), new Var<int>(3), new Var<string>("3")},
+                                        {new Var<double>(5), new Var<int>(5), new Var<string>("5")},
+                                        {new Var<double>(1), new Var<int>(4), new Var<string>("4")},
+                                        {new Var<double>(7), new Var<int>(2), new Var<string>("2")},
+                                        {new Var<double>(3), new Var<int>(4), new Var<string>("4")},
+                                        {new Var<double>(2), new Var<int>(2), new Var<string>("2")}};
+    vector < pair < vector<VarBaseSortable*>, int >> points_ptrs { { { data[0][0], data[0][1], data[0][2] }, 1 },
+                                                              { { data[1][0], data[1][1], data[1][2] }, 2 },
+                                                              { { data[2][0], data[2][1], data[2][2] }, 3 },
+                                                              { { data[3][0], data[3][1], data[3][2] }, 4 },
+                                                              { { data[4][0], data[4][1], data[4][2] }, 5 },
+                                                              { { data[5][0], data[5][1], data[5][2] }, 6 },
+                                                              { { data[6][0], data[6][1], data[6][2] }, 7 },
+                                                              { { data[7][0], data[7][1], data[7][2] }, 8 } };
     Analysis::kd_tree<vector<VarBaseSortable*>, int,
                       VarBaseSortable::Less, VarBaseSortable::Equate> tree(points_ptrs.begin(), points_ptrs.end(), 3);
 
@@ -254,8 +252,8 @@ int main (int argc, const char *argv[])
     cout << "\n" << endl;
 
     vector < pair < VarBaseSortable*, VarBaseSortable* >> constraints = { { new Var<double>(4), new Var<double>(8) },
-                                                                              { new Var<double>(1), new Var<double>(5) },
-                                                                              { new Var<double>(1), new Var<double>(3) } };
+                                                                              { new Var<int>(1), new Var<int>(5) },
+                                                                              { new Var<string>("1"), new Var<string>("3") } };
     auto contained = tree[constraints];
     cout << "# of contained elements: " << std::distance(contained.begin(), contained.end()) << endl;
     cout << "contained elements of tree in reverse sorted order: ";
