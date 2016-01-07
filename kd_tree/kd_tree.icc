@@ -81,7 +81,8 @@ kd_tree<Key, T, Compare, Equate, Alloc>::computeMedian (std::pair<Iterator, Iter
   &range_end              = range.second;
   auto   range_distance   = std::distance(range_begin, range_end);
   subkey_type median;
-  auto   pred = [&coord_index, this](const decltype(*range_begin) &l, const decltype(*range_begin) &r)
+  auto   pred = [&coord_index, this](const typename std::decay<decltype(*range_begin)>::type &l,
+                                     const typename std::decay<decltype(*range_begin)>::type &r)
                 {
                   // works with containers (for keys) other than vectors
                   auto li = /*static_cast<const value_type&>(*/l/*)*/.first.begin(),
@@ -120,7 +121,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::splitRange(std::pair<Iterator, Iterator
   std::pair < Iterator, Iterator >> result;
   auto &left_result = result.first,
   &right_result     = result.second;
-  auto pred         = [&coord_index, &median, this](const decltype(*range.first) &e)
+  auto pred         = [&coord_index, &median, this](const typename std::decay<decltype(*range.first)>::type &e)
                       {
                         auto ei = /*static_cast<const value_type&>(*/e/*)*/.first.begin();
                         std::advance(ei, coord_index);
