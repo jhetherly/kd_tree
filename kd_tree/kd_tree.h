@@ -138,7 +138,7 @@ class kd_tree {
 
   struct DefaultResolution {
     template <class RandomAccessIterator>
-    T operator() (RandomAccessIterator, RandomAccessIterator l) const {return std::prev(l)->second;} 
+    T operator() (RandomAccessIterator, RandomAccessIterator l) const {return std::prev(l)->second;}
   } m_defaultCR;
 
 public:
@@ -172,6 +172,10 @@ public:
    */
   template<class RandomAccessIterator>
   kd_tree (RandomAccessIterator, RandomAccessIterator, const size_t&);
+  /**
+   * CollisionResolver should return a new "stored_type" object given iterators
+   * to a sequence of elements that have the same key
+   */
   template<class RandomAccessIterator, class CollisionResolver>
   kd_tree (RandomAccessIterator, RandomAccessIterator, const size_t&, const CollisionResolver&);
 

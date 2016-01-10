@@ -218,9 +218,9 @@ kd_tree<Key, T, Compare, Equate, Alloc>::specialSplitRange(std::pair<Iterator, I
                              ri = /*static_cast<const value_type&>(*/ref/*)*/.begin();
                         bool are_same = true;
                         while (ei != e.first.end() && ri != ref.end() && are_same) {
+                          are_same &= this->m_equate(*ei, *ri);
                           ei = std::next(ei);
                           ri = std::next(ri);
-                          are_same &= this->m_equate(*ei, *ri);
                         }
                         return are_same;
                       };
