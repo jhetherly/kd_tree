@@ -127,9 +127,19 @@ class kd_tree {
   splitRange(std::pair<ForwardIterator, ForwardIterator>&,
              const unsigned long long&,
              const typename Key::value_type&);
+  template<class ForwardIterator>
+  std::pair < std::pair<ForwardIterator, ForwardIterator>,
+  std::pair < ForwardIterator, ForwardIterator >>
+  specialSplitRange(std::pair<ForwardIterator, ForwardIterator>&,
+                    const Key&);
   template<class Container>
   bool CheckKey (const Container&,
                  const Key      &) const;
+
+  struct DefaultResolution {
+    template <class RandomAccessIterator>
+    T operator() (RandomAccessIterator, RandomAccessIterator l) const {return std::prev(l)->second;} 
+  } m_defaultCR;
 
 public:
 
@@ -162,6 +172,8 @@ public:
    */
   template<class RandomAccessIterator>
   kd_tree (RandomAccessIterator, RandomAccessIterator, const size_t&);
+  template<class RandomAccessIterator, class CollisionResolver>
+  kd_tree (RandomAccessIterator, RandomAccessIterator, const size_t&, const CollisionResolver&);
 
   virtual ~kd_tree () {
     if (m_root) delete m_root;
