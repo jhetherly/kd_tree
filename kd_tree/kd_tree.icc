@@ -47,7 +47,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
     depths.pop_front();
 
     // check for duplicates
-    if (last_single_parent.first != nullptr && depth - last_single_parent.second > dim) {
+    if (last_single_parent.first != nullptr && depth - last_single_parent.second > dim + 1) {
       auto  test_ranges        = this->specialSplitRange(right_range, (*(right_range.first)).first);
       auto &left_test_range    = test_ranges.first,
       &right_test_range        = test_ranges.second;
