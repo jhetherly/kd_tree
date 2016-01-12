@@ -18,6 +18,8 @@ class kd_node_base {
 public:
 
   kd_node_base (const bool &isLeaf) : m_isLeaf(isLeaf) {}
+  kd_node_base (const kd_node_base &other) : m_isLeaf(other.m_isLeaf) {}
+  kd_node_base (kd_node_base &&other) : m_isLeaf(std::move(other.m_isLeaf)) {}
 
   virtual ~kd_node_base () {}
 
@@ -27,7 +29,41 @@ public:
 };
 
 
-template<class Key, class T>
+template<class Key, class T,
+         class Alloc = std::allocator<std::pair<const Key, const T> > >
+class kd_leaf : public kd_node_base {
+  template<class, class, class,
+           class, class> friend class Analysis::kd_tree;
+
+  using value_type = std::pair<const Key, const T>;
+
+  value_type m_value;
+
+public:
+
+  kd_leaf (const value_type &val) : kd_node_base(true), m_value {val} {}
+  kd_leaf (value_type &&val) : kd_node_base(true), m_value {std::move(val)} {}
+  kd_leaf (const kd_leaf &other) : kd_node_base(true), m_value(other.m_value) {}
+  kd_leaf (kd_leaf &&other) : kd_node_base(true), m_value(std::move(other.m_value)) {}
+
+  virtual ~kd_leaf () {}
+
+  const Key& GetKey () const noexcept {
+    return m_value.first;
+  }
+
+  const T& GetValue () const noexcept {
+    return m_value.second;
+  }
+
+  const value_type& GetPair () const noexcept {
+    return m_value;
+  }
+};
+
+
+template<class Key, class T,
+         class Alloc = std::allocator<std::pair<const Key, const T> > >
 class kd_node : public kd_node_base {
   template<class, class, class,
            class, class> friend class Analysis::kd_tree;
@@ -41,6 +77,22 @@ class kd_node : public kd_node_base {
 public:
 
   kd_node () : kd_node_base(false) {}
+  kd_node (const kd_node &other) : kd_node_base(false), m_median(other.m_median)
+  {
+    if (other.m_leftChild != nullptr) {
+      if (other.m_leftChild->isLeaf())
+        this->m_leftChild = new kd_leaf<Key, T, Alloc>(*static_cast<kd_leaf<Key, T, Alloc>*>(other.m_leftChild));
+      else
+        this->m_leftChild = new kd_node<Key, T, Alloc>(*static_cast<kd_node<Key, T, Alloc>*>(other.m_leftChild));
+    }
+    if (other.m_rightChild->isLeaf())
+      this->m_rightChild = new kd_leaf<Key, T, Alloc>(*static_cast<kd_leaf<Key, T, Alloc>*>(other.m_rightChild));
+    else
+      this->m_rightChild = new kd_node<Key, T, Alloc>(*static_cast<kd_node<Key, T, Alloc>*>(other.m_rightChild));
+  }
+  kd_node (kd_node &&other) : kd_node_base(false), m_median(std::move(other.m_median)),
+                              m_leftChild(std::move(other.m_leftChild)), m_rightChild(std::move(other.m_rightChild))
+  {}
 
   virtual ~kd_node ()
   {
@@ -69,37 +121,6 @@ public:
   }
 };
 
-
-template<class Key, class T,
-         class Alloc = std::allocator<std::pair<const Key, const T> > >
-class kd_leaf : public kd_node_base {
-  template<class, class, class,
-           class, class> friend class Analysis::kd_tree;
-
-  using value_type = std::pair<const Key, const T>;
-
-  value_type m_value;
-
-public:
-
-  kd_leaf (const value_type &val) : kd_node_base(true), m_value {val} {}
-
-  kd_leaf (value_type &&val) : kd_node_base(true), m_value {std::move(val)} {}
-
-  virtual ~kd_leaf () {}
-
-  const Key& GetKey () const noexcept {
-    return m_value.first;
-  }
-
-  const T& GetValue () const noexcept {
-    return m_value.second;
-  }
-
-  const value_type& GetPair () const noexcept {
-    return m_value;
-  }
-};
 } // kd_tree_internal
 
 
@@ -110,7 +131,7 @@ template<class Key, class T,
          class Alloc   = std::allocator<std::pair<const Key, const T> > >
 class kd_tree {
 
-  kd_tree_internal::kd_node<Key, T> *m_root { nullptr };
+  kd_tree_internal::kd_node<Key, T, Alloc> *m_root { nullptr };
   size_t  m_dim;
   Compare m_comp;
   Equate  m_equate;
@@ -178,6 +199,19 @@ public:
    */
   template<class RandomAccessIterator, class CollisionResolver>
   kd_tree (RandomAccessIterator, RandomAccessIterator, const size_t&, const CollisionResolver&);
+
+  kd_tree (const kd_tree &other) :
+    m_root(new kd_tree_internal::kd_node<Key, T, Alloc>(*other.m_root)),
+    m_dim(other.m_dim), m_comp(other.m_comp), m_equate(other.m_equate),
+    m_alloc(other.m_alloc), m_values(other.m_values)
+  {}
+  kd_tree (kd_tree &&other) :
+    m_root(std::move(other.m_root)), m_dim(std::move(other.m_dim)),
+    m_comp(std::move(other.m_comp)), m_equate(std::move(other.m_equate)),
+    m_alloc(std::move(other.m_alloc)), m_values(std::move(other.m_values))
+  {
+    other.m_root = nullptr;
+  }
 
   virtual ~kd_tree () {
     if (m_root) delete m_root;

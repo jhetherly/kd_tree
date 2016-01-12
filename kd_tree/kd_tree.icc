@@ -23,9 +23,9 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
   if (length == 0) return;
 
   std::forward_list < std::pair < Iterator, Iterator >> ranges = { { begin, end } };
-  std::forward_list<kd_tree_internal::kd_node<Key, T>*> nodes = { new kd_tree_internal::kd_node<Key, T>() };
+  std::forward_list<kd_tree_internal::kd_node<Key, T, Alloc>*> nodes = { new kd_tree_internal::kd_node<Key, T, Alloc>() };
   std::forward_list<unsigned long long> depths = { 0 };
-  std::pair < kd_tree_internal::kd_node<Key, T>*, unsigned long long > last_single_parent;
+  std::pair < kd_tree_internal::kd_node<Key, T, Alloc>*, unsigned long long > last_single_parent;
 
   this->m_root = nodes.front();
 
@@ -87,7 +87,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
       if (right_distance == 1)
         node->m_rightChild = new kd_tree_internal::kd_leaf<Key, T, Alloc>(value_type(*right_range.first));
       else {
-        nodes.push_front(new kd_tree_internal::kd_node<Key, T>());
+        nodes.push_front(new kd_tree_internal::kd_node<Key, T, Alloc>());
         node->m_rightChild = nodes.front();
         ranges.push_front(right_range);
         depths.push_front(depth + 1);
@@ -99,7 +99,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
       if (left_distance == 1)
         node->m_leftChild = new kd_tree_internal::kd_leaf<Key, T, Alloc>(value_type(*left_range.first));
       else {
-        nodes.push_front(new kd_tree_internal::kd_node<Key, T>());
+        nodes.push_front(new kd_tree_internal::kd_node<Key, T, Alloc>());
         node->m_leftChild = nodes.front();
         ranges.push_front(left_range);
         depths.push_front(depth + 1);
@@ -266,7 +266,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::operator[](const Container &con) const
       // if (add) result.emplace_back(leaf->GetPair());
     }
     else {
-      auto node    = static_cast<kd_tree_internal::kd_node<Key, T>*>(n);
+      auto node    = static_cast<kd_tree_internal::kd_node<Key, T, Alloc>*>(n);
       auto median  = node->GetMedian();
       auto left_n  = node->GetLeftChild(),
            right_n = node->GetRightChild();

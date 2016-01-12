@@ -220,6 +220,12 @@ int main (int argc, const char *argv[])
       std::distance(tree2.begin(), tree2.end()) << endl;
     cout << "elements of tree in reverse sorted order: ";
     for (auto p : tree2) cout << p.get().second << " ";
+    cout << "\n" << endl;
+
+    Analysis::kd_tree<vector<double>, int> tree_copy(tree);
+    cout << "# of elements in copied tree: " << std::distance(tree.begin(), tree.end()) << endl;
+    cout << "elements of copied tree in reverse sorted order: ";
+    for (auto p : tree) cout << p.get().second << " ";
     cout << "\n\n" << endl;
   }
   // ///////////////////////////
