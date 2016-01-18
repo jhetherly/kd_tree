@@ -70,7 +70,7 @@ class kd_node : public kd_node_base {
 
   using subkey_type = typename Key::value_type;
 
-  subkey_type   m_median;
+  subkey_type  *m_median { nullptr }; // observer
   kd_node_base *m_leftChild { nullptr },
                *m_rightChild { nullptr };
 
@@ -101,7 +101,7 @@ public:
   }
 
   const subkey_type& GetMedian () const noexcept {
-    return m_median;
+    return *m_median;
   }
 
   const kd_node_base* GetLeftChild () const noexcept {
@@ -139,7 +139,7 @@ class kd_tree {
   std::forward_list < std::reference_wrapper < const std::pair<const Key, const T>>> m_values;
 
   template<class RandomAccessIterator>
-  typename Key::value_type
+  typename Key::value_type*
   computeMedian (std::pair<RandomAccessIterator, RandomAccessIterator>&,
                  const unsigned long long&);
   template<class ForwardIterator>

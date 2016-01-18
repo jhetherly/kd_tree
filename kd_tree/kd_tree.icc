@@ -36,7 +36,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
     auto  coord_index = depth % m_dim;
     auto  median      = this->computeMedian(range, coord_index);
     node->m_median    = median;
-    auto  new_ranges    = this->splitRange(range, coord_index, median);
+    auto  new_ranges    = this->splitRange(range, coord_index, *median);
     auto &left_range    = new_ranges.first,
     &right_range        = new_ranges.second;
     auto left_distance  = std::distance(left_range.first, left_range.second),
@@ -136,14 +136,14 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
 template<class Key, class T,
          class Compare, class Equate, class Alloc>
 template<class Iterator>
-typename Key::value_type
+typename Key::value_type*
 kd_tree<Key, T, Compare, Equate, Alloc>::computeMedian (std::pair<Iterator, Iterator> &range,
                                                 const unsigned long long &coord_index)
 {
   const auto &range_begin = range.first,
   &range_end              = range.second;
   auto   range_distance   = std::distance(range_begin, range_end);
-  subkey_type median;
+  subkey_type *median = nullptr;
   auto   pred = [&coord_index, this](const typename std::decay<decltype(*range_begin)>::type &l,
                                      const typename std::decay<decltype(*range_begin)>::type &r)
                 {
@@ -164,7 +164,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::computeMedian (std::pair<Iterator, Iter
     auto mi = /*static_cast<const value_type>*/(*mid).first.begin();
     std::advance(mi, coord_index);
 
-    median = *mi;
+    median = &(*mi);
   }
 
   return median;
@@ -267,7 +267,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::operator[](const Container &con) const
     }
     else {
       auto node    = static_cast<kd_tree_internal::kd_node<Key, T, Alloc>*>(n);
-      auto median  = node->GetMedian();
+      const auto &median  = node->GetMedian();
       auto left_n  = node->GetLeftChild(),
            right_n = node->GetRightChild();
 
