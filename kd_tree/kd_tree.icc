@@ -136,14 +136,14 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
 template<class Key, class T,
          class Compare, class Equate, class Alloc>
 template<class Iterator>
-typename Key::value_type*
+const typename Key::value_type*
 kd_tree<Key, T, Compare, Equate, Alloc>::computeMedian (std::pair<Iterator, Iterator> &range,
                                                 const unsigned long long &coord_index)
 {
   const auto &range_begin = range.first,
   &range_end              = range.second;
   auto   range_distance   = std::distance(range_begin, range_end);
-  subkey_type *median = nullptr;
+  const subkey_type *median = nullptr;
   auto   pred = [&coord_index, this](const typename std::decay<decltype(*range_begin)>::type &l,
                                      const typename std::decay<decltype(*range_begin)>::type &r)
                 {
