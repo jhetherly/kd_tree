@@ -254,8 +254,8 @@ kd_tree<Key, T, Compare, Equate, Alloc>::operator[](const Container &con) const
     auto coord_index = depth % m_dim;
     auto it          = con.begin();
     std::advance(it, coord_index);
-    auto min = get<0>(*it),
-         max = get<1>(*it);
+    auto &min = get<0>(*it),
+         &max = get<1>(*it);
 
     ns.pop_front();
     depths.pop_front();
@@ -309,13 +309,14 @@ template<class Container>
 bool
 kd_tree<Key, T, Compare, Equate, Alloc>::CheckKey (const Container &con, const Key &key) const
 {
+  using std::get;
   auto ci = con.begin();
   auto ki = key.begin();
   bool result { true };
 
   do {
-    auto min = ci->first,
-         max = ci->second;
+    auto &min = get<0>(*ci),
+         &max = get<1>(*ci);
     result &= ((m_comp(min, *ki) || m_equate(min, *ki)) &&
                (m_comp(*ki, max) || m_equate(*ki, max)));
     ci      = std::next(ci);
