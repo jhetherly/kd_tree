@@ -17,6 +17,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
                                                   const size_t &dim, const CR &collisionResolver) :
   m_dim(dim)
 {
+  using std::get;
   auto length = std::distance(begin, end);
 
   // iteratively construct tree (doesn't blow the stack for large trees)
@@ -37,46 +38,46 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
     auto  median      = this->computeMedian(range, coord_index);
     node->m_median    = median;
     auto  new_ranges    = this->splitRange(range, coord_index, *median);
-    auto &left_range    = new_ranges.first,
-    &right_range        = new_ranges.second;
-    auto left_distance  = std::distance(left_range.first, left_range.second),
-         right_distance = std::distance(right_range.first, right_range.second);
+    auto &left_range    = get<0>(new_ranges),
+    &right_range        = get<1>(new_ranges);
+    auto left_distance  = std::distance(get<0>(left_range), get<1>(left_range)),
+         right_distance = std::distance(get<0>(right_range), get<1>(right_range));
 
     ranges.pop_front();
     nodes.pop_front();
     depths.pop_front();
 
     // check for duplicates
-    if (last_single_parent.first != nullptr && depth - last_single_parent.second > dim + 1) {
-      auto  test_ranges        = this->specialSplitRange(right_range, (*(right_range.first)).first);
-      auto &left_test_range    = test_ranges.first,
-      &right_test_range        = test_ranges.second;
-      auto right_test_distance = std::distance(right_test_range.first, right_test_range.second);
+    if (get<0>(last_single_parent) != nullptr && depth - get<1>(last_single_parent) > dim + 1) {
+      auto  test_ranges        = this->specialSplitRange(right_range, get<0>(*(get<0>(right_range))));
+      auto &left_test_range    = get<0>(test_ranges),
+      &right_test_range        = get<1>(test_ranges);
+      auto right_test_distance = std::distance(get<0>(right_test_range), get<1>(right_test_range));
 
       if (right_test_distance > 0) { // not all elements are the same
-        auto last_same = std::prev(left_test_range.second);
+        auto last_same = std::prev(get<1>(left_test_range));
         // TODO:
-        last_same->second = collisionResolver(left_test_range.first, left_test_range.second);
-        delete last_single_parent.first->m_rightChild;
-        nodes.push_front(last_single_parent.first);
-        ranges.push_front({last_same, right_test_range.second});
-        depths.push_front(last_single_parent.second);
-        last_single_parent.first = nullptr;
-        last_single_parent.second = 0;
+        get<1>(*last_same) = collisionResolver(get<0>(left_test_range), get<1>(left_test_range));
+        delete get<0>(last_single_parent)->m_rightChild;
+        nodes.push_front(get<0>(last_single_parent));
+        ranges.push_front({last_same, get<1>(right_test_range)});
+        depths.push_front(get<1>(last_single_parent));
+        get<0>(last_single_parent) = nullptr;
+        get<1>(last_single_parent) = 0;
         continue;
       }
       else { // all elements are the same
-        delete last_single_parent.first->m_rightChild;
+        delete get<0>(last_single_parent)->m_rightChild;
         // TODO:
-        stored_type new_stored_value = collisionResolver(right_range.first, right_range.second);
-        value_type new_value = {right_range.first->first, new_stored_value};
+        stored_type new_stored_value = collisionResolver(get<0>(right_range), get<1>(right_range));
+        value_type new_value = {get<0>(*get<0>(right_range)), new_stored_value};
         // TODO: use allocator
         node->m_rightChild = new kd_tree_internal::kd_leaf<Key, T, Alloc>(new_value);
         m_values.emplace_front(
           static_cast<kd_tree_internal::kd_leaf<Key, T, Alloc>*>(node->m_rightChild)->GetPair()
           );
-        last_single_parent.first = nullptr;
-        last_single_parent.second = 0;
+        get<0>(last_single_parent) = nullptr;
+        get<1>(last_single_parent) = 0;
         continue;
       }
     }
@@ -85,7 +86,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
     if (right_distance > 0) {
       // TODO: use allocator
       if (right_distance == 1)
-        node->m_rightChild = new kd_tree_internal::kd_leaf<Key, T, Alloc>(value_type(*right_range.first));
+        node->m_rightChild = new kd_tree_internal::kd_leaf<Key, T, Alloc>(value_type(*get<0>(right_range)));
       else {
         nodes.push_front(new kd_tree_internal::kd_node<Key, T, Alloc>());
         node->m_rightChild = nodes.front();
@@ -97,7 +98,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
     if (left_distance > 0) {
       // TODO: use allocator
       if (left_distance == 1)
-        node->m_leftChild = new kd_tree_internal::kd_leaf<Key, T, Alloc>(value_type(*left_range.first));
+        node->m_leftChild = new kd_tree_internal::kd_leaf<Key, T, Alloc>(value_type(*get<0>(left_range)));
       else {
         nodes.push_front(new kd_tree_internal::kd_node<Key, T, Alloc>());
         node->m_leftChild = nodes.front();
@@ -118,15 +119,15 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
     // reset condition for last_single_parent
     if ((left_distance == 0 && right_distance == 1) ||
         (left_distance == 1 && right_distance == 1)) {
-      last_single_parent.first = nullptr;
-      last_single_parent.second = 0;
+      get<0>(last_single_parent) = nullptr;
+      get<1>(last_single_parent) = 0;
     }
     // new last_single_parent
     // single parents only have "right" children
     if ((left_distance == 0 && right_distance > 1)) {
-      if (last_single_parent.first == nullptr) {
-        last_single_parent.first = node;
-        last_single_parent.second = depth;
+      if (get<0>(last_single_parent) == nullptr) {
+        get<0>(last_single_parent) = node;
+        get<1>(last_single_parent) = depth;
       }
     }
   }
@@ -140,28 +141,29 @@ const typename Key::value_type*
 kd_tree<Key, T, Compare, Equate, Alloc>::computeMedian (std::pair<Iterator, Iterator> &range,
                                                 const unsigned long long &coord_index)
 {
-  const auto &range_begin = range.first,
-  &range_end              = range.second;
+  using std::get;
+  const auto &range_begin = get<0>(range),
+  &range_end              = get<1>(range);
   auto   range_distance   = std::distance(range_begin, range_end);
   const subkey_type *median = nullptr;
   auto   pred = [&coord_index, this](const typename std::decay<decltype(*range_begin)>::type &l,
                                      const typename std::decay<decltype(*range_begin)>::type &r)
                 {
                   // works with containers (for keys) other than vectors
-                  auto li = /*static_cast<const value_type&>(*/l/*)*/.first.begin(),
-                       ri = /*static_cast<const value_type&>(*/r/*)*/.first.begin();
+                  auto li = get<0>(l).begin(),
+                       ri = get<0>(r).begin();
                   std::advance(li, coord_index);
                   std::advance(ri, coord_index);
                   return this->m_comp(*li, *ri);
                 };
 
   {
-    auto mid = range.first;
+    auto mid = get<0>(range);
     std::advance(mid, range_distance / 2);
 
     std::nth_element(range_begin, mid, range_end, pred);
 
-    auto mi = /*static_cast<const value_type>*/(*mid).first.begin();
+    auto mi = get<0>(*mid).begin();
     std::advance(mi, coord_index);
 
     median = &(*mi);
@@ -180,21 +182,22 @@ kd_tree<Key, T, Compare, Equate, Alloc>::splitRange(std::pair<Iterator, Iterator
                                             const unsigned long long &coord_index,
                                             const typename Key::value_type &median)
 {
+  using std::get;
   std::pair < std::pair<Iterator, Iterator>,
   std::pair < Iterator, Iterator >> result;
-  auto &left_result = result.first,
-  &right_result     = result.second;
-  auto pred         = [&coord_index, &median, this](const typename std::decay<decltype(*range.first)>::type &e)
+  auto &left_result = get<0>(result),
+  &right_result     = get<1>(result);
+  auto pred         = [&coord_index, &median, this](const typename std::decay<decltype(*get<0>(range))>::type &e)
                       {
-                        auto ei = /*static_cast<const value_type&>(*/e/*)*/.first.begin();
+                        auto ei = get<0>(e).begin();
                         std::advance(ei, coord_index);
                         return this->m_comp(*ei, median);
                       };
 
-  auto bound = std::partition(range.first, range.second, pred);
+  auto bound = std::partition(get<0>(range), get<1>(range), pred);
 
-  left_result  = { range.first, bound };
-  right_result = { bound, range.second };
+  left_result  = { get<0>(range), bound };
+  right_result = { bound, get<1>(range) };
 
   return result;
 }
@@ -208,16 +211,17 @@ std::pair < Iterator, Iterator >>
 kd_tree<Key, T, Compare, Equate, Alloc>::specialSplitRange(std::pair<Iterator, Iterator>&range,
                                                            const key_type &ref)
 {
+  using std::get;
   std::pair < std::pair<Iterator, Iterator>,
   std::pair < Iterator, Iterator >> result;
-  auto &left_result = result.first,
-  &right_result     = result.second;
-  auto pred         = [&ref, this](const typename std::decay<decltype(*range.first)>::type &e)
+  auto &left_result = get<0>(result),
+  &right_result     = get<1>(result);
+  auto pred         = [&ref, this](const typename std::decay<decltype(*get<0>(range))>::type &e)
                       {
-                        auto ei = /*static_cast<const value_type&>(*/e/*)*/.first.begin(),
-                             ri = /*static_cast<const value_type&>(*/ref/*)*/.begin();
+                        auto ei = get<0>(e).begin(),
+                             ri = ref.begin();
                         bool are_same = true;
-                        while (ei != e.first.end() && ri != ref.end() && are_same) {
+                        while (ei != get<0>(e).end() && ri != ref.end() && are_same) {
                           are_same &= this->m_equate(*ei, *ri);
                           ei = std::next(ei);
                           ri = std::next(ri);
@@ -225,10 +229,10 @@ kd_tree<Key, T, Compare, Equate, Alloc>::specialSplitRange(std::pair<Iterator, I
                         return are_same;
                       };
 
-  auto bound = std::partition(range.first, range.second, pred);
+  auto bound = std::partition(get<0>(range), get<1>(range), pred);
 
-  left_result  = { range.first, bound };
-  right_result = { bound, range.second };
+  left_result  = { get<0>(range), bound };
+  right_result = { bound, get<1>(range) };
 
   return result;
 }
