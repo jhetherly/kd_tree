@@ -241,6 +241,8 @@ auto
 kd_tree<Key, T, Compare, Equate, Alloc>::operator[](const Container &con) const
   ->std::forward_list < std::reference_wrapper < const value_type >>
 {
+  using std::get;
+
   std::forward_list < std::reference_wrapper < const value_type >> result;
 
   std::forward_list<kd_tree_internal::kd_node_base*> ns { this->m_root };
@@ -252,8 +254,8 @@ kd_tree<Key, T, Compare, Equate, Alloc>::operator[](const Container &con) const
     auto coord_index = depth % m_dim;
     auto it          = con.begin();
     std::advance(it, coord_index);
-    auto min = it->first,
-         max = it->second;
+    auto min = get<0>(*it),
+         max = get<1>(*it);
 
     ns.pop_front();
     depths.pop_front();
