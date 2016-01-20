@@ -69,26 +69,34 @@ class kd_node : public kd_node_base {
            class, class> friend class Analysis::kd_tree;
 
   using subkey_type = typename Key::value_type;
+  using subkey_alloc = typename Key::allocator_type;
 
-  const subkey_type  *m_median { nullptr }; // observer
-  kd_node_base       *m_leftChild { nullptr },
-                     *m_rightChild { nullptr };
+  subkey_alloc   m_coordAlloc;
+  subkey_type   *m_median { nullptr };
+  kd_node_base  *m_leftChild { nullptr },
+                *m_rightChild { nullptr };
 
 public:
 
   kd_node () : kd_node_base(false) {}
-  kd_node (const kd_node &other) : kd_node_base(false), m_median(other.m_median)
+  kd_node (const kd_node &other) : kd_node_base(false)
   {
+    if (other.m_median != nullptr) {
+      this->m_median = m_coordAlloc.allocate(1);
+      m_coordAlloc.construct(this->m_median, *other.m_median);
+    }
     if (other.m_leftChild != nullptr) {
       if (other.m_leftChild->isLeaf())
         this->m_leftChild = new kd_leaf<Key, T, Alloc>(*static_cast<kd_leaf<Key, T, Alloc>*>(other.m_leftChild));
       else
         this->m_leftChild = new kd_node<Key, T, Alloc>(*static_cast<kd_node<Key, T, Alloc>*>(other.m_leftChild));
     }
-    if (other.m_rightChild->isLeaf())
-      this->m_rightChild = new kd_leaf<Key, T, Alloc>(*static_cast<kd_leaf<Key, T, Alloc>*>(other.m_rightChild));
-    else
-      this->m_rightChild = new kd_node<Key, T, Alloc>(*static_cast<kd_node<Key, T, Alloc>*>(other.m_rightChild));
+    if (other.m_rightChild != nullptr) {
+      if (other.m_rightChild->isLeaf())
+        this->m_rightChild = new kd_leaf<Key, T, Alloc>(*static_cast<kd_leaf<Key, T, Alloc>*>(other.m_rightChild));
+      else
+        this->m_rightChild = new kd_node<Key, T, Alloc>(*static_cast<kd_node<Key, T, Alloc>*>(other.m_rightChild));
+    }
   }
   kd_node (kd_node &&other) : kd_node_base(false), m_median(std::move(other.m_median)),
                               m_leftChild(std::move(other.m_leftChild)), m_rightChild(std::move(other.m_rightChild))
@@ -96,6 +104,10 @@ public:
 
   virtual ~kd_node ()
   {
+    if (m_median) {
+      m_coordAlloc.destroy(m_median);
+      m_coordAlloc.deallocate(m_median, 1);
+    }
     if (m_leftChild) delete m_leftChild;
     if (m_rightChild) delete m_rightChild;
   }
@@ -135,11 +147,12 @@ class kd_tree {
   size_t  m_dim;
   Compare m_comp;
   Equate  m_equate;
+  typename Key::allocator_type m_coordAlloc;
   Alloc   m_alloc;
   std::forward_list < std::reference_wrapper < const std::pair<const Key, const T>>> m_values;
 
   template<class RandomAccessIterator>
-  const typename Key::value_type*
+  typename Key::value_type*
   computeMedian (std::pair<RandomAccessIterator, RandomAccessIterator>&,
                  const unsigned long long&);
   template<class ForwardIterator>

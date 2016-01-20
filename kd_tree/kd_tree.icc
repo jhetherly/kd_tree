@@ -36,7 +36,11 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
     auto  depth       = depths.front();
     auto  coord_index = depth % m_dim;
     auto  median      = this->computeMedian(range, coord_index);
-    node->m_median    = median;
+    if (node->m_median != nullptr) {
+      m_coordAlloc.destroy(node->m_median);
+      m_coordAlloc.deallocate(node->m_median, 1);
+    }
+    node->m_median      = median;
     auto  new_ranges    = this->splitRange(range, coord_index, *median);
     auto &left_range    = get<0>(new_ranges),
     &right_range        = get<1>(new_ranges);
@@ -137,7 +141,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
 template<class Key, class T,
          class Compare, class Equate, class Alloc>
 template<class Iterator>
-const typename Key::value_type*
+typename Key::value_type*
 kd_tree<Key, T, Compare, Equate, Alloc>::computeMedian (std::pair<Iterator, Iterator> &range,
                                                 const unsigned long long &coord_index)
 {
@@ -145,7 +149,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::computeMedian (std::pair<Iterator, Iter
   const auto &range_begin = get<0>(range),
   &range_end              = get<1>(range);
   auto   range_distance   = std::distance(range_begin, range_end);
-  const subkey_type *median = nullptr;
+  subkey_type     *median = nullptr;
   auto   pred = [&coord_index, this](const typename std::decay<decltype(*range_begin)>::type &l,
                                      const typename std::decay<decltype(*range_begin)>::type &r)
                 {
@@ -166,7 +170,8 @@ kd_tree<Key, T, Compare, Equate, Alloc>::computeMedian (std::pair<Iterator, Iter
     auto mi = get<0>(*mid).begin();
     std::advance(mi, coord_index);
 
-    median = &(*mi);
+    median = m_coordAlloc.allocate(1);
+    m_coordAlloc.construct(median, *mi);
   }
 
   return median;
