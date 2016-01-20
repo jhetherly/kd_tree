@@ -36,6 +36,7 @@ kd_tree<Key, T, Compare, Equate, Alloc>::kd_tree (Iterator begin, Iterator end,
     auto  depth       = depths.front();
     auto  coord_index = depth % m_dim;
     auto  median      = this->computeMedian(range, coord_index);
+    this->checkMedian(range, coord_index, median);
     if (node->m_median != nullptr) {
       m_coordAlloc.destroy(node->m_median);
       m_coordAlloc.deallocate(node->m_median, 1);
@@ -176,6 +177,82 @@ kd_tree<Key, T, Compare, Equate, Alloc>::computeMedian (std::pair<Iterator, Iter
 
   return median;
 } // computeMedian
+
+
+template<class Key, class T,
+         class Compare, class Equate, class Alloc>
+template<class RandomAccessIterator>
+void
+kd_tree<Key, T, Compare, Equate, Alloc>::checkMedian (
+  std::pair<RandomAccessIterator, RandomAccessIterator> &range,
+  const unsigned long long &coord_index,
+  typename Key::value_type *&median)
+{
+  using std::get;
+  const auto &range_begin = get<0>(range),
+  &range_end              = get<1>(range);
+  auto   range_distance   = std::distance(range_begin, range_end),
+        left_left_sub_range_distance = range_distance,
+        left_right_sub_range_distance = range_distance,
+        right_left_sub_range_distance = range_distance,
+        right_right_sub_range_distance = range_distance;
+
+  {
+    auto mid = get<0>(range),
+         left = mid,
+         right = mid;
+    std::advance(mid, range_distance / 2);
+    left_left_sub_range_distance = 0;
+    right_right_sub_range_distance = 0;
+
+    for (auto it = mid; it != range_end; ++it) {
+      auto iit = get<0>(*it).begin();
+      std::advance(iit, coord_index);
+      if (!m_equate(*median, *iit)) {
+        right_left_sub_range_distance = std::distance(range_begin, it);
+        right_right_sub_range_distance = std::distance(it, range_end);
+        right = it;
+      }
+    }
+    for (auto it = mid; it != range_begin; --it) {
+      auto iit = get<0>(*it).begin();
+      std::advance(iit, coord_index);
+      if (!m_equate(*median, *iit)) {
+        left_left_sub_range_distance = std::distance(range_begin, it);
+        left_right_sub_range_distance = std::distance(it, range_end);
+        left = it;
+      }
+    }
+
+    auto ldiff = std::abs(left_left_sub_range_distance - left_right_sub_range_distance);
+    auto rdiff = std::abs(right_left_sub_range_distance - right_right_sub_range_distance);
+
+    if (rdiff < ldiff) {
+      auto   pred = [&coord_index, this](const typename std::decay<decltype(*range_begin)>::type &l,
+                                         const typename std::decay<decltype(*range_begin)>::type &r)
+                    {
+                      // works with containers (for keys) other than vectors
+                      auto li = get<0>(l).begin(),
+                           ri = get<0>(r).begin();
+                      std::advance(li, coord_index);
+                      std::advance(ri, coord_index);
+                      return this->m_comp(*li, *ri);
+                    };
+
+      {
+        std::nth_element(range_begin, right, range_end, pred);
+
+        auto ri = get<0>(*right).begin();
+        std::advance(ri, coord_index);
+
+        m_coordAlloc.destroy(median);
+        m_coordAlloc.deallocate(median, 1);
+        median = m_coordAlloc.allocate(1);
+        m_coordAlloc.construct(median, *ri);
+      }
+    }
+  }
+}
 
 
 template<class Key, class T,

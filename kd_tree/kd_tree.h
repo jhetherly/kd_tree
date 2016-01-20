@@ -155,6 +155,11 @@ class kd_tree {
   typename Key::value_type*
   computeMedian (std::pair<RandomAccessIterator, RandomAccessIterator>&,
                  const unsigned long long&);
+  template<class RandomAccessIterator>
+  void
+  checkMedian (std::pair<RandomAccessIterator, RandomAccessIterator>&,
+               const unsigned long long&,
+               typename Key::value_type*&);
   template<class ForwardIterator>
   std::pair < std::pair<ForwardIterator, ForwardIterator>,
   std::pair < ForwardIterator, ForwardIterator >>
